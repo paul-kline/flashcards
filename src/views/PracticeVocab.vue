@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto">
-    Practice, bitch
+    Practice, bitch ({{myCards.length}})
     <div class="flex-row">
       <div class="only-child">
         <b-button class="only-child" variant="success" v-if="!currentCard" @click="begin">Begin</b-button>
@@ -16,16 +16,16 @@
             <div class="flex-row">
               <b-button
                 style="width: 45%; height:60%;"
-                variant="success"
-                class="btn m-1"
-                @click="got"
-              >Got it</b-button>
-              <b-button
-                style="width: 45%; height:60%;"
                 variant="danger"
                 class="btn m-1"
                 @click="missed"
               >Missed it</b-button>
+              <b-button
+                style="width: 45%; height:60%;"
+                variant="success"
+                class="btn m-1"
+                @click="got"
+              >Got it</b-button>
             </div>
           </div>
         </b-card>
@@ -36,7 +36,7 @@
       class="align-left btn m-1"
       @click="missed"
     >Undo</b-button>
-    <b-button class="btn m-3" @click="saveProgress">Save Progress</b-button>
+    <b-button class="btn m-3" @click="saveProgress">{{saveStatusText}}</b-button>
   </div>
 </template>
 
@@ -54,6 +54,7 @@ export default class PracticeVocab extends Vue {
   public myCards: FlashCard[] = [];
   public currentCard: FlashCard | null = null;
   public front: boolean = true;
+  public saveStatusText: string = "Save Status Online";
   begin() {
     console.log("starting");
     if (this.myCards.length < 1) this.myCards = [...user.flashCards];
@@ -71,6 +72,7 @@ export default class PracticeVocab extends Vue {
   nextTick() {
     this.currentCard = this.getNext();
     this.front = true;
+    this.saveStatusText = "Save Status to Cloud (Unsaved changes)";
   }
   missed() {
     //user missed, idiot
@@ -108,7 +110,24 @@ export default class PracticeVocab extends Vue {
     return next;
   }
   saveProgress() {
-    user.setData();
+    this.saveStatusText = "saving...";
+    user
+      .setData()
+      .then(v => {
+        this.$bvToast.toast(`Successfully Saved Status to cloud`, {
+          title: "Success",
+          variant: "success",
+          autoHideDelay: 4000
+        });
+        this.saveStatusText = "Save Status to Cloud";
+      })
+      .catch(e => {
+        this.$bvToast.toast(e, {
+          title: "Failure",
+          variant: "danger",
+          autoHideDelay: 4000
+        });
+      });
   }
 }
 </script>

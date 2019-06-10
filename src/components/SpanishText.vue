@@ -6,19 +6,56 @@
       @input="emit"
       v-model="txt"
       :placeholder="placeholder"
+      @keypress.enter="enterPressed"
+      :state="state"
       ref="myField"
     ></b-form-input>
+    <b-form-invalid-feedback id="input-live-feedback">Key Exists! Replace at your own risk.</b-form-invalid-feedback>
   </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Vue } from "vue-property-decorator";
+import { Component, Prop, Vue, Watch } from "vue-property-decorator";
 
 @Component
-export default class HelloWorld extends Vue {
+export default class SpanishText extends Vue {
   @Prop() private placeholder!: string;
-  @Prop() private value!: number;
+  @Prop() private state!: boolean;
+  @Prop() private value!: string;
   public txt: string = "";
+  @Watch("value")
+  onPropertyChanged(value: string, oldValue: string) {
+    this.txt = value;
+    // console.log("detected change:", this.value);
+  }
+
+  mounted() {
+    console.log(
+      "mounted",
+      "value",
+      this.value,
+      "txt",
+      this.txt,
+      "placeholder",
+      this.placeholder
+    );
+    if (this.value) {
+      this.txt = this.value;
+    }
+    if (this.placeholder) {
+      console.log("should have placeholder of", this.placeholder);
+      (this.$refs["myField"] as any).$forceUpdate();
+    }
+    //  if()
+  }
+
+  setFocus() {
+    (this.$refs["myField"] as HTMLInputElement).focus();
+  }
+  enterPressed(x: KeyboardEvent) {
+    console.log("emitting enter pressed");
+    this.$emit("keypress.enter", x);
+  }
   pushed(x: KeyboardEvent) {
     // console.log("pushed");
     const k = x.key;

@@ -1,23 +1,26 @@
 <template>
   <div>
-    <b-navbar toggleable="lg" type="dark" variant="info">
-      <b-navbar-brand href="#">Vocab 0.0.1</b-navbar-brand>
+    <b-navbar toggleable="sm" type="dark" variant="dark">
+      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.1</b-navbar-brand>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
       <b-collapse id="nav-collapse" is-nav>
-        <b-navbar-nav>
-          <b-nav-item>
-            <router-link class to="practicevocab">Practice Vocab</router-link>
+        <b-nav tabs>
+          <b-nav-item to="practicevocab" :active="active==0" @click="active=0">
+            Practice Vocab
+            <!-- <router-link class to="practicevocab">Practice Vocab</router-link> -->
           </b-nav-item>
-          <b-nav-item>
-            <router-link to="addvocab">Add Vocab</router-link>
+          <b-nav-item to="addvocab" :active="active==1" @click="active=1">
+            Add Vocab
+            <!-- <router-link to="addvocab">Add Vocab</router-link> -->
           </b-nav-item>
-          <b-nav-item>
-            <router-link to="stats">Stats</router-link>
+          <b-nav-item to="stats" :active="active==2" @click="active=2">
+            Stats
+            <!-- <router-link to="stats">Stats</router-link> -->
           </b-nav-item>
           <!-- <b-nav-item href="#" disabled>Disabled</b-nav-item> -->
-        </b-navbar-nav>
+        </b-nav>
 
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
@@ -33,19 +36,20 @@
             <b-dropdown-item href="#">FA</b-dropdown-item>
           </b-nav-item-dropdown>-->
 
-          <b-nav-item-dropdown right>
+          <b-nav-item-dropdown v-if="user && user.isSignedIn()" right>
             <!-- Using 'button-content' slot -->
             <template slot="button-content">
-              <em>User</em>
+              <em>Logged In</em>
             </template>
             <template v-if="user && user.isSignedIn()">
               <b-dropdown-item href="#">Profile</b-dropdown-item>
               <b-dropdown-item @click="user.signOut()">Sign Out</b-dropdown-item>
             </template>
-            <template v-else>
+            <!-- <template v-else>
               <b-dropdown-item @click="user.signIn()">Sign In</b-dropdown-item>
-            </template>
+            </template>-->
           </b-nav-item-dropdown>
+          <b-nav-item v-else @click="user.signIn()">Sign In</b-nav-item>
         </b-navbar-nav>
       </b-collapse>
     </b-navbar>
@@ -58,36 +62,8 @@ import User from "@/User";
 
 @Component
 export default class Menu extends Vue {
-  @Prop() private placeholder!: string;
-  @Prop() private value!: number;
-  private user = User;
-  public txt: string = "";
-  pushed(x: KeyboardEvent) {
-    console.log("pushed");
-    const k = x.key;
-    const i: number = "aeiouAEIOU".indexOf(k);
-    if (i > -1) {
-      this.insertAtCursor("áéíóúÁÉÍÓÚ"[i]);
-      this.emit();
-    }
-  }
-  emit() {
-    console.log("emitting", this.txt);
-    this.$emit("input", this.txt);
-  }
-  insertAtCursor(myValue: string) {
-    const myField = this.$refs["myField"] as HTMLInputElement;
-    if (myField.selectionStart || myField.selectionStart == 0) {
-      const startPos = myField.selectionStart;
-      const endPos = myField.selectionEnd || 0;
-      this.txt =
-        this.txt.substring(0, startPos) +
-        myValue +
-        this.txt.substring(endPos, myField.value.length);
-    } else {
-      this.txt += myValue;
-    }
-  }
+  active = -1;
+  user = User;
 }
 </script>
 

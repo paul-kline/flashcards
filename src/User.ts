@@ -139,13 +139,15 @@ class User {
       return this.data;
     }
   }
-  setData(data: any = this.data) {
+  setData(data: any = this.data): Promise<void> {
     console.log("setting data using:", data);
     if (this.user) {
       var docRef = db.collection("users").doc(this.user.uid);
       console.log(docRef);
       (window as any).doc = docRef;
-      docRef.set(data as firebase.firestore.DocumentData, { merge: true });
+      return docRef.set(data as firebase.firestore.DocumentData, { merge: true });
+    } else {
+      return Promise.reject("No User logged in");
     }
   }
 }

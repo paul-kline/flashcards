@@ -3,9 +3,11 @@
     Sort By
     <b-dropdown prepend="Sort By" :text="selection" variant="info">
       <b-dropdown-item @click="sortByHardest">hardest</b-dropdown-item>
+
       <b-dropdown-item>Action B</b-dropdown-item>
     </b-dropdown>
-    <div class="j" v-if="selection == 'Hardest'">
+    ({{myCards.length}})
+    <div class="j" v-if="selection == 'hardest'">
       <b-card
         class="mb-1"
         v-for="item in myCards"
@@ -13,7 +15,7 @@
         :header="item.key"
         :footer="'Success Rate:' + (item.successRate)"
       >
-        {{ item.value }}
+        <b-card-text>{{ item.value }}</b-card-text>
         Views: {{item.corrects.length + item.incorrects.length}}
         <!-- Everything: {{JSON.stringify(item)}} -->
       </b-card>
@@ -41,7 +43,9 @@ export default class CardStats extends Vue {
   }
   sortByHardest(): FlashCard[] {
     if (this.myCards.length < 1) this.myCards = [...user.flashCards];
-    this.selection = "Hardest";
+    console.log("# flashcard:", this.myCards.length);
+
+    this.selection = "hardest";
     return this.myCards.sort(
       (a: FlashCard, b: FlashCard) => a.successRate - b.successRate
     );
