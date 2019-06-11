@@ -87,7 +87,11 @@ export default class PracticeVocab extends Vue {
   begin() {
     (window as any).me = this;
     console.log("starting");
-    if (this.myCards.length < 1) this.myCards = [...user.flashCards];
+    if (this.myCards.length < 1){
+      this.myCards = [...user.flashCards];
+      //also do selected sort.
+      this.selected.func();
+    }
     const hl = this.history.length;
     if (hl > 100) {
       this.history.splice(0, 100); //cap history to last 100 cards

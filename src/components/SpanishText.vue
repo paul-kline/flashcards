@@ -10,7 +10,7 @@
       :state="state"
       ref="myField"
     ></b-form-input>
-    <b-form-invalid-feedback id="input-live-feedback">Key Exists! Replace at your own risk.</b-form-invalid-feedback>
+    <b-form-invalid-feedback id="input-live-feedback">{{errorMessage}}</b-form-invalid-feedback>
   </div>
 </template>
 
@@ -22,6 +22,7 @@ export default class SpanishText extends Vue {
   @Prop() private placeholder!: string;
   @Prop() private state!: boolean;
   @Prop() private value!: string;
+  @Prop() private errorMessage!: string;
   public txt: string = "";
   @Watch("value")
   onPropertyChanged(value: string, oldValue: string) {

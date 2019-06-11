@@ -9,6 +9,7 @@
           v-model="key"
           varient="danger"
           :state="keyState"
+          :errorMessage="keyErrorMessage"
         ></SpanishText>
       </div>
       <div class="value m-1">
@@ -70,8 +71,21 @@ export default class AddVocab extends Vue {
   public key: string = "";
   public value: string = "";
   public toAdds: ToAdd[] = [];
+  public keyErrorMessage: string = "";
   get keyState() {
-    return this.key.length < 1 || !(this.key in user.data);
+    if (this.key.length < 1) {
+      this.keyErrorMessage = "Must enter something";
+      return false;
+    } else {
+      const res = user.data[this.key];
+      if (res) {
+        this.keyErrorMessage = "Key already exists with value: " + res.value;
+        return false;
+      } else {
+        return true;
+      }
+    }
+    // return this.key.length < 1 || !(this.key in user.data);
   }
   public includeReverse: boolean = true;
   private cloudButtonText: string = "Save to Cloud";
