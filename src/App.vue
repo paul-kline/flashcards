@@ -1,7 +1,10 @@
 <template>
   <div id="app">
     <Menu/>
-    <router-view/>
+    <keep-alive>
+      <router-view/>
+    </keep-alive>
+    <!-- <router-view/> -->
   </div>
 </template>
 <script lang="ts">

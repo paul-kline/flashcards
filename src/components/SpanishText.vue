@@ -65,7 +65,10 @@ export default class SpanishText extends Vue {
       this.emit();
     }
   }
-  emit() {
+  emit(x: string = "") {
+    if (x.indexOf("?") > -1) {
+      this.$emit("question-mark");
+    }
     // console.log("emitting", this.txt);
     this.$emit("input", this.txt);
   }

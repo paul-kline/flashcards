@@ -2,8 +2,14 @@
   <div class="container mx-auto m-3">
     <div class="flex-row">
       <div class="key m-1">
-        <SpanishText ref="fst" placeholder="key" v-model="key" varient="danger" :state="keyState"></SpanishText>
-        <b-form-invalid-feedback id="input-live-feedback">Enter at least 3 letters</b-form-invalid-feedback>
+        <SpanishText
+          @question-mark="onQMark"
+          ref="fst"
+          placeholder="key"
+          v-model="key"
+          varient="danger"
+          :state="keyState"
+        ></SpanishText>
       </div>
       <div class="value m-1">
         <SpanishText @keypress.enter="submit" placeholder="value" v-model="value"></SpanishText>
@@ -69,6 +75,10 @@ export default class AddVocab extends Vue {
   }
   public includeReverse: boolean = true;
   private cloudButtonText: string = "Save to Cloud";
+  onQMark() {
+    // console.log("on q mark!!!");
+    this.includeReverse = false;
+  }
   deleteMe(x: ToAdd) {
     const i = this.toAdds.indexOf(x);
     if (i >= 0) {

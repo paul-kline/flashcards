@@ -12,10 +12,17 @@
         class="mb-1"
         v-for="item in myCards"
         :key="item.key + item.entryValue.value"
-        :header="item.key"
         :footer="'Success Rate:' + (item.successRate)"
+        :header-html="item.key"
       >
-        <b-card-text>{{ item.value }}</b-card-text>
+        <h6 slot="header" class="mb-0">
+          <strong>{{item.key}}:</strong>
+          <em>{{item.entryValue.value}}</em>
+        </h6>
+        <!-- <b-card-header > -->
+
+        <!-- </b-card-header> -->
+        <!-- <b-card-text>{{ item.value }}</b-card-text> -->
         Views: {{item.corrects.length + item.incorrects.length}}
         <!-- Everything: {{JSON.stringify(item)}} -->
       </b-card>

@@ -38,23 +38,33 @@ firebase
   });
 const db = firebase.firestore();
 class User {
-  private static _instance: User;
-  private authToken: string = "";
-  private user: firebase.User | null = null;
-  public flashCards: FlashCard[] = [];
-  public data: EnteriesMap = {};
   public static getInstance(): User {
     if (!User._instance) {
       User._instance = new User();
     }
     return User._instance;
   }
+  private static _instance: User;
+
+  public flashCards: FlashCard[] = [];
+  public data: EnteriesMap = {};
+
+  public dataRetrieved: boolean = false;
+  private authToken: string = "";
+  private user: firebase.User | null = null;
+  private flashCardSubscribers: any[] = [];
   constructor() {
     const me = this;
     firebase.auth().onAuthStateChanged(user => {
-      console.log("something happened in login state!!", user);
       me.user = user;
-      me.fetchData();
+      if (user) {
+        //user logged in.
+        console.log("user is not null;");
+        me.fetchData();
+      } else {
+        console.log("user is null");
+      }
+      console.log("something happened in login state!!", user);
     });
     firebase
       .auth()
@@ -84,6 +94,7 @@ class User {
   }
 
   toFlashCards(): FlashCard[] {
+    console.log("attempt make flashcards");
     if (this.flashCards.length > 1) {
       this.flashCards = [];
     }
@@ -95,6 +106,7 @@ class User {
           this.flashCards.push(new FlashCard(k, entr, false));
         }
       }
+      console.log("flashcards made");
     }
     return this.flashCards;
   }
@@ -121,8 +133,9 @@ class User {
   }
   async fetchData() {
     if (this.user) {
+      console.log("fetching data...");
       var docRef = db.collection("users").doc(this.user.uid);
-      console.log(docRef);
+      //   console.log(docRef);
       (window as any).doc = docRef;
       const x = await docRef.get();
       const dat = x.data();
@@ -131,11 +144,12 @@ class User {
           this.data[k] = toEntryValue(dat[k]);
         }
         // this.data = dat;
-        console.log("map data:", this.data);
-        console.log("map data as toJSON:", JSON.stringify(this.data));
+        // console.log("map data:", this.data);
+        // console.log("map data as toJSON:", JSON.stringify(this.data));
       }
       //set Flashcards
       this.toFlashCards();
+      this.dataRetrieved = true;
       return this.data;
     }
   }
@@ -143,7 +157,7 @@ class User {
     console.log("setting data using:", data);
     if (this.user) {
       var docRef = db.collection("users").doc(this.user.uid);
-      console.log(docRef);
+      //   console.log(docRef);
       (window as any).doc = docRef;
       return docRef.set(data as firebase.firestore.DocumentData, { merge: true });
     } else {
@@ -162,7 +176,7 @@ function toEntryValue(entryObj: any): EntryValue {
   }
   //   { got: [], missed: [], reverseGot: [], reverseMissed: [] };
   for (const k of ["got", "missed", "reverseGot", "reverseMissed"]) {
-    console.log(k);
+    // console.log(k);
     (stuff.stats as any)[k] = toDates((stuff.stats as any)[k]);
   }
   return stuff;
@@ -192,8 +206,29 @@ export interface Stats {
 }
 export class FlashCard {
   public importance: number = 0;
+
   constructor(private _key: string, private entryValue: EntryValue, public forwards: boolean = true) {
-    this.setDefaultImportance();
+    // this.setDefaultImportance();
+  }
+  removeLastAttempt() {
+    const lastWrong = this.lastWrong;
+    const lastRight = this.lastRight;
+    if (!lastWrong) {
+      //if no wrong exists, try to pop the last right. can fail just fine.
+      this.corrects.pop();
+    } else if (!lastRight) {
+      //if no right exists, try to pop last fail.
+      this.incorrects.pop();
+    } else {
+      //they both exist.
+      if (lastWrong.getTime() > lastRight.getTime()) {
+        //wrongs is most recent
+        this.incorrects.pop();
+      } else {
+        //last right is more recent;
+        this.corrects.pop();
+      }
+    }
   }
   addFailure(date = new Date()) {
     const dat = User.getInstance().data;
@@ -214,7 +249,7 @@ export class FlashCard {
   setDefaultImportance() {
     // const daysAgoAdded = (new Date().getTime() - this.entryValue.created.getTime()) / (1000 * 60 * 60 * 24);
     const successRate = this.successRate;
-    console.log("setting importance", this);
+    // console.log("setting importance", this);
     const lastSeenAgoMS = new Date().getTime() - this.lastTested.getTime();
     const lastSeenDays = lastSeenAgoMS / (1000 * 60 * 60 * 24);
     //the more recently
@@ -235,12 +270,12 @@ export class FlashCard {
   get successRate() {
     const corrects = this.corrects.length;
     const incorrects = this.incorrects.length;
-    return corrects / (corrects + incorrects);
+    return corrects / (corrects + incorrects) || 0; //return 0% if div0 error NaN
   }
-  get lastWrong(): Date {
+  get lastWrong(): Date | undefined {
     return this.incorrects[this.incorrects.length - 1];
   }
-  get lastRight(): Date {
+  get lastRight(): Date | undefined {
     return this.corrects[this.corrects.length - 1];
   }
   //   get lastTested(): Date {

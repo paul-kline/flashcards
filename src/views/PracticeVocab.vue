@@ -1,6 +1,15 @@
 <template>
-  <div class="container mx-auto">
-    Practice, bitch ({{myCards.length}})
+  <div class="container mx-auto" style="height:70vh;">
+    <div class="ordering">
+      <b-form-select v-model="selected" :options="options" class="mb-3" @input="selectionMade">
+        <template slot="first">
+          <option :value="null" disabled>-- Please select an option --</option>
+        </template>
+
+        <!-- This slot appears above the options from 'options' prop -->
+      </b-form-select>
+    </div>
+    Cards Left ({{myCards.length}})
     <div class="flex-row">
       <div class="only-child">
         <b-button class="only-child" variant="success" v-if="!currentCard" @click="begin">Begin</b-button>
@@ -11,31 +20,29 @@
           v-else-if="front"
           @click="front = !front"
         ></b-card>
-        <b-card v-else class="only-child center text-center" :header="currentCard.value">
-          <div style="display:flex; flex-direction:column; justify-content:flex-end;">
-            <div class="flex-row">
+        <b-card
+          v-else
+          class="only-child center text-center"
+          header="Back"
+          :title="currentCard.value"
+        >
+          <div
+            style="display:flex; flex-direction:column; justify-content:flex-end; align-items:stretch; height:80%;"
+          >
+            <div class="flex-row" style="align-items:stretch; flex-grow:1;">
               <b-button
-                style="width: 45%; height:60%;"
                 variant="danger"
+                style="flex-grow:1;"
                 class="btn m-1"
                 @click="missed"
               >Missed it</b-button>
-              <b-button
-                style="width: 45%; height:60%;"
-                variant="success"
-                class="btn m-1"
-                @click="got"
-              >Got it</b-button>
+              <b-button variant="success" style="flex-grow:1;" class="btn m-1" @click="got">Got it</b-button>
             </div>
           </div>
         </b-card>
       </div>
     </div>
-    <b-button
-      style="width: 45%; height:60%; text-align:left"
-      class="align-left btn m-1"
-      @click="missed"
-    >Undo</b-button>
+    <b-button class="align-left btn m-1" @click="undo">Undo</b-button>
     <b-button class="btn m-3" @click="saveProgress">{{saveStatusText}}</b-button>
   </div>
 </template>
@@ -51,15 +58,57 @@ import user, { FlashCard, EntryValue } from "@/User";
   }
 })
 export default class PracticeVocab extends Vue {
+  public name: string = "practicevocab";
   public myCards: FlashCard[] = [];
+  public history: FlashCard[] = [];
   public currentCard: FlashCard | null = null;
+  public selected: any = null;
+
+  public options = [
+    {
+      text: "Random",
+      value: { text: "rando", func: this.randomize },
+      disabled: false
+    },
+    {
+      text: "Hardest",
+      value: { text: "hard-on", func: this.byHardest },
+      disabled: false
+    },
+    { text: "B", value: "Boo", disabled: false },
+    { text: "C", value: "C", disabled: false },
+    { text: "D", value: { d: 1 }, disabled: true },
+    { text: "E", value: "E", disabled: false },
+    { text: "F", value: "F", disabled: false }
+  ];
+
   public front: boolean = true;
   public saveStatusText: string = "Save Status Online";
   begin() {
+    (window as any).me = this;
     console.log("starting");
     if (this.myCards.length < 1) this.myCards = [...user.flashCards];
+    const hl = this.history.length;
+    if (hl > 100) {
+      this.history.splice(0, 100); //cap history to last 100 cards
+    }
     this.currentCard = this.getNext();
     console.log("current card:", this.currentCard);
+  }
+  selectionMade(x: any) {
+    console.log("selection made");
+    x.func();
+  }
+  randomize() {
+    console.log("randiming");
+    this.myCards.sort((a: FlashCard, b: FlashCard) => Math.random() - 0.5);
+    console.log("random order", this.myCards.map(x => (x as any)._key));
+  }
+  byHardest() {
+    console.log("sorting by hardest");
+    this.myCards.sort(
+      (a: FlashCard, b: FlashCard) => b.successRate - a.successRate
+    );
   }
   got() {
     //user got correct
@@ -70,9 +119,31 @@ export default class PracticeVocab extends Vue {
     this.nextTick();
   }
   nextTick() {
+    if (this.currentCard) {
+      this.history.push(this.currentCard);
+    }
     this.currentCard = this.getNext();
     this.front = true;
     this.saveStatusText = "Save Status to Cloud (Unsaved changes)";
+  }
+  undo() {
+    console.log("undo called");
+    if (this.front) {
+      if (this.history.length < 1) {
+        //if ur already lookin at front and
+        //no history, do nuthin.
+        return;
+      }
+      this.front = false;
+      if (this.currentCard) {
+        //put back in deck, remove its recorded history.
+        this.currentCard.removeLastAttempt();
+        this.myCards.push(this.currentCard);
+      }
+      this.currentCard = this.history.pop() || null;
+    } else {
+      this.front = true;
+    }
   }
   missed() {
     //user missed, idiot
@@ -84,9 +155,10 @@ export default class PracticeVocab extends Vue {
   }
   mounted() {
     this.myCards = [...user.flashCards];
-    this.myCards.sort(
-      (a: FlashCard, b: FlashCard) => a.importance - b.importance
-    );
+    // this.myCards.sort(
+    //   (a: FlashCard, b: FlashCard) => a.importance - b.importance
+    // );
+    this.randomize();
   }
   getNext(): FlashCard | null {
     console.log("myCards", this.myCards);
@@ -138,7 +210,7 @@ export default class PracticeVocab extends Vue {
   align-content: center;
   align-items: stretch;
   justify-content: center;
-  height: 70vh;
+  height: 100%;
   // width: 70vw;
 }
 .flex-column {
