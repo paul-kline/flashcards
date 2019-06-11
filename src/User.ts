@@ -207,7 +207,7 @@ export interface Stats {
 export class FlashCard {
   public importance: number = 0;
 
-  constructor(private _key: string, private entryValue: EntryValue, public forwards: boolean = true) {
+  constructor(public _key: string, private entryValue: EntryValue, public forwards: boolean = true) {
     // this.setDefaultImportance();
   }
   removeLastAttempt() {

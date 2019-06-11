@@ -87,7 +87,7 @@ export default class PracticeVocab extends Vue {
   begin() {
     (window as any).me = this;
     console.log("starting");
-    if (this.myCards.length < 1){
+    if (this.myCards.length < 1) {
       this.myCards = [...user.flashCards];
       //also do selected sort.
       this.selected.func();
@@ -164,12 +164,47 @@ export default class PracticeVocab extends Vue {
     // );
     this.randomize();
   }
-  getNext(): FlashCard | null {
+  getNext(attempts: number = 0): FlashCard | null {
     console.log("myCards", this.myCards);
-    const x = this.myCards.pop();
-    if (x) {
-      return x;
+    const proposedNextCard = this.myCards.pop();
+    if (proposedNextCard) {
+      if (attempts > 5) {
+        //give up. 5 is enough.
+        return proposedNextCard;
+      }
+      //make sure it isn't in the last 5
+      const histLen = this.history.length;
+      const last5 = this.history.slice(Math.max(0, histLen - 5));
+      const isInLast5 = last5.find(y => y._key == proposedNextCard._key);
+      if (isInLast5) {
+        let appearedXCardsAgo = last5.length - last5.indexOf(isInLast5);
+        //last card is "1" ago.
+        //now try to move the card to 5 away,
+        let succeeded = false;
+        for (let i = this.myCards.length - 1; i >= 0; i--) {
+          if (this.myCards[i]._key == proposedNextCard._key) {
+            //future proof. maybe there are >2 cards with this key.
+            appearedXCardsAgo = 0;
+          } else if (appearedXCardsAgo < 5) {
+            appearedXCardsAgo++;
+          } else {
+            //finally, we have arrived at 5 cards away.
+            this.myCards.splice(i, 0, isInLast5);
+            succeeded = true;
+          }
+        }
+        if (!succeeded) {
+          //if we failed, just put it as far away as you can.
+          this.myCards.unshift(proposedNextCard);
+        }
+        return this.getNext(attempts + 1);
+        // arr.splice(index, 0, item); will insert item into arr at the specified index (deleting 0 items first, that is, it's just an insert).
+      } else {
+        //doesn't occur in last 5 seen:
+        return proposedNextCard;
+      }
     } else {
+      //no more cards in deck!
       return null;
     }
   }
