@@ -71,8 +71,10 @@ import global from "@/ts/Global";
 })
 export default class PracticeVocab extends Vue {
   public name: string = "practicevocab";
+  public allCards: FlashCard[] = [];
   public myCards: FlashCard[] = [];
   public history: FlashCard[] = [];
+  public maxCards: number = 50;
   public currentCard: FlashCard | null = null;
   public selected: any = null;
   public selectedCollection: string | null = null;
@@ -107,7 +109,7 @@ export default class PracticeVocab extends Vue {
     if (this.myCards.length < 1 && this.selectedCollection) {
       const collName = this.selectedCollection;
       const cards = await global.getFlashCards(collName);
-      this.myCards = [...cards]; //create a copy list of links so I can eff with them.
+      this.allCards = [...cards]; //create a copy list of links so I can eff with them.
       //also do selected sort.
       this.selected.func();
     }
@@ -119,8 +121,10 @@ export default class PracticeVocab extends Vue {
     console.log("current card:", this.currentCard);
   }
   async collectionSelected(x: string) {
-    const collection = await this.myGlobal.getCollection(x);
-    this.myCards = FlashCard.toFlashCards(collection);
+    // const collection = await this.myGlobal.getCollection(x);
+    this.allCards = await this.myGlobal.getFlashCards(x);
+    // this.myCards = FlashCard.toFlashCards(collection);
+    // console.table(this.myCards.map(x => [x._key, x.key, x.value, x.forwards]));
   }
   selectionMade(x: any) {
     console.log("selection made");
@@ -128,14 +132,17 @@ export default class PracticeVocab extends Vue {
   }
   randomize() {
     console.log("randiming");
-    this.myCards.sort((a: FlashCard, b: FlashCard) => Math.random() - 0.5);
+    this.allCards.sort((a: FlashCard, b: FlashCard) => Math.random() - 0.5);
+    this.myCards = this.allCards.slice(0, this.maxCards);
+
     console.log("random order", this.myCards.map(x => (x as any)._key));
   }
   byHardest() {
     console.log("sorting by hardest");
-    this.myCards.sort(
+    this.allCards.sort(
       (a: FlashCard, b: FlashCard) => b.successRate - a.successRate
     );
+    this.myCards = this.allCards.slice(0, this.maxCards);
   }
   async got() {
     //user got correct
@@ -230,7 +237,8 @@ export default class PracticeVocab extends Vue {
         return proposedNextCard;
       }
     } else {
-      //no more cards in deck!
+      //no more cards in deck! Save progress!
+      this.saveProgress();
       return null;
     }
   }

@@ -33,21 +33,21 @@ export default class SpanishText extends Vue {
   }
 
   mounted() {
-    console.log(
-      "mounted",
-      "value",
-      this.value,
-      "txt",
-      this.txt,
-      "placeholder",
-      this.placeholder
-    );
+    // console.log(
+    //   "mounted",
+    //   "value",
+    //   this.value,
+    //   "txt",
+    //   this.txt,
+    //   "placeholder",
+    //   this.placeholder
+    // );
     if (this.value) {
       this.txt = this.value;
     }
     if (this.placeholder) {
-      console.log("should have placeholder of", this.placeholder);
-      (this.$refs["myField"] as any).$forceUpdate();
+      // console.log("should have placeholder of", this.placeholder);
+      // (this.$refs["myField"] as any).$forceUpdate();
     }
     //  if()
   }

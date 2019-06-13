@@ -9,7 +9,7 @@
       name="checkbox-1"
       :value="true"
     >Include reverse</b-form-checkbox>
-    <b-button @click="deleteMe()">X</b-button>
+    <b-button @click="deleteMe">X</b-button>
   </div>
 </template>
 
@@ -30,16 +30,14 @@ export default class EntryEditor extends Vue {
   onPropertyChanged(value: string, oldValue: string) {
     console.log("toadd changed from:", oldValue, "to", value);
   }
-  updated() {
-    console.log("mounted with:", this.toAdd);
-    console.log("prop2", this.prop2);
-  }
+
   mounted() {
-    console.log("mounted with:", this.toAdd);
-    console.log("prop2", this.prop2);
+    // console.log("mounted with:", this.toAdd);
+    // console.log("prop2", this.prop2);
   }
   deleteMe() {
-    this.$emit("delete-me", this.toAdd);
+    console.log("emitting delete:", this.toAdd);
+    this.$emit("deleted", this.toAdd);
   }
 }
 </script>

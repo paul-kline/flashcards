@@ -21,13 +21,12 @@
       <b-card
         class="mb-1"
         v-for="item in myCards"
-        :key="item.key + item.entryValue.value"
+        :key="item.key + item.value"
         :footer="'Success Rate:' + (item.successRate)"
-        :header-html="item.key"
       >
         <h6 slot="header" class="mb-0">
-          <strong>{{item.key}}:</strong>
-          <em>{{item.entryValue.value}}</em>
+          <strong>{{item.key}} ==></strong>
+          <em>{{item.value}}</em>
         </h6>
         <!-- <b-card-header > -->
 
@@ -67,6 +66,7 @@ export default class CardStats extends Vue {
   async collectionSelected() {
     if (!this.collectionSelection) return;
     this.myCards = await this.myGlobal.getFlashCards(this.collectionSelection);
+    console.table(this.myCards.map(x => [x.key, x.value]));
   }
   sortByHardest(): FlashCard[] {
     // if (this.myCards.length < 1) this.myCards = [...user.flashCards];

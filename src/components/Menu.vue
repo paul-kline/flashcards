@@ -15,9 +15,11 @@
             Add Vocab
             <!-- <router-link to="addvocab">Add Vocab</router-link> -->
           </b-nav-item>
-          <b-nav-item to="stats" :active="active==2" @click="active=2">
-            Stats
-            <!-- <router-link to="stats">Stats</router-link> -->
+
+          <b-nav-item to="stats" :active="active==2" @click="active=2">Stats</b-nav-item>
+          <b-nav-item to="editcollection" :active="active==3" @click="active=3">
+            Edit Collection
+            <!-- <router-link to="addvocab">Add Vocab</router-link> -->
           </b-nav-item>
           <!-- <b-nav-item href="#" disabled>Disabled</b-nav-item> -->
         </b-nav>

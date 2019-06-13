@@ -87,7 +87,7 @@
           <b-button @click="deleteMe(add)">X</b-button>
         </div>-->
         <template>
-          <EntryEditor :to-add="add"></EntryEditor>
+          <EntryEditor :to-add="add" @deleted="deleteMe"></EntryEditor>
           <div class="divider"></div>
         </template>
       </div>
@@ -118,6 +118,7 @@ export default class AddVocab extends Vue {
   public key: string = "";
   public value: string = "";
   public toAdds: ToAdd[] = [];
+  public toDelete: ToAdd[] = [];
   public keyErrorMessage: string = "";
   public selectedCollection: string | null = null;
   public myGlobal = global;
@@ -157,6 +158,13 @@ export default class AddVocab extends Vue {
       this.currentEntries = await this.myGlobal.getCollection(
         this.selectedCollection
       );
+      if (this.toAdds.length > 0 && this.currentEntries) {
+        this.toAdds = [];
+      }
+      console.log("entries:", JSON.stringify(this.currentEntries));
+      for (const k in this.currentEntries) {
+        this.toAdds.push(this.toToAdd(this.currentEntries[k]));
+      }
     }
   }
   get keyState() {
@@ -188,14 +196,16 @@ export default class AddVocab extends Vue {
   }
   async deleteMe(x: ToAdd) {
     if (!this.selectedCollection) {
-      console.log("could not delete", x, "because no selection");
+      console.error("could not delete", x, "because no selection");
       return;
     }
     const i = this.toAdds.indexOf(x);
     if (i >= 0) {
-      this.toAdds.splice(i, 1);
+      const [x] = this.toAdds.splice(i, 1);
+      this.toDelete.push(x);
     }
     const collection = await global.getCollection(this.selectedCollection);
+    // this.toDelete.push(collection[x.originalKey]);
     delete collection[x.originalKey];
   }
   get reversed() {
@@ -207,8 +217,19 @@ export default class AddVocab extends Vue {
   mounted() {
     console.log("refefije", this.$refs["fst"]);
     (this.$refs["fst"] as SpanishText).setFocus();
+    (window as any).getSuggestions = this.suggestMerges;
   }
-
+  toToAdd(x: EntryValue) {
+    const newItem: ToAdd = {
+      originalKey: x.key,
+      originalValue: x.value,
+      key: x.key,
+      value: x.value,
+      reverse: x.reverse,
+      collection: this.selectedCollection || ""
+    };
+    return newItem;
+  }
   async submit() {
     const newItem: ToAdd = {
       originalKey: this.key,
@@ -257,24 +278,72 @@ export default class AddVocab extends Vue {
     console.log("toadds are:", this.toAdds);
     if (!this.selectedCollection) return;
     this.toAdds.forEach(this.modifyEntry);
-    global
-      .saveCollection(this.selectedCollection)
-      .then(v => {
-        this.$bvToast.toast(`Successfully Saved data to cloud`, {
-          title: "Success",
-          variant: "success",
-          autoHideDelay: 4000
-        });
-        this.toAdds = [];
-        this.cloudButtonText = "Save to Cloud";
-      })
-      .catch(e => {
-        this.$bvToast.toast(e, {
-          title: "Failure",
-          variant: "danger",
-          autoHideDelay: 4000
-        });
+    const b = this.toDelete && this.toDelete.length > 0;
+    let a;
+    if (b) {
+      a = global.saveAndDeleteCollection(
+        this.selectedCollection,
+        this.toDelete.map(x => x.key)
+      );
+    } else {
+      a = global.saveCollection(this.selectedCollection);
+    }
+    a.then(v => {
+      this.$bvToast.toast(`Successfully Saved data to cloud`, {
+        title: "Success",
+        variant: "success",
+        autoHideDelay: 4000
       });
+      // this.toAdds = [];
+      this.toDelete = [];
+      this.cloudButtonText = "Save to Cloud";
+    }).catch(e => {
+      this.$bvToast.toast(e, {
+        title: "Failure",
+        variant: "danger",
+        autoHideDelay: 4000
+      });
+    });
+  }
+  suggestMerges() {
+    if (!this.currentEntries) {
+      console.error("No Entries to evaluate for merge!");
+      return;
+    }
+    const entries = this.currentEntries;
+    let myCopy = [...this.toAdds];
+    const suggestions = [];
+    while (myCopy && myCopy.length > 0) {
+      const toAdd = myCopy.pop() as ToAdd; //must exist. typescript you idiot.
+      const [k1, k2] = [
+        toAdd.key.trim().toLowerCase(),
+        toAdd.value.trim().toLowerCase()
+      ];
+      const matches = this.toAdds.filter((x: ToAdd) => {
+        const [y, z] = [
+          x.key.trim().toLowerCase(),
+          x.value.trim().toLowerCase()
+        ];
+        return (
+          (k1.includes(y) ||
+            k1.includes(z) ||
+            k2.includes(y) ||
+            k2.includes(z) ||
+            y.includes(k1) ||
+            y.includes(k2) ||
+            z.includes(k1) ||
+            z.includes(k2)) &&
+          x != toAdd
+        );
+      });
+      if (matches && matches.length > 0) {
+        suggestions.push([toAdd, ...matches]);
+      }
+      //only keep ones not put in group.
+      myCopy = myCopy.filter(x => !matches.includes(x));
+    }
+    console.log("suggested merges:");
+    console.log(suggestions.map(x => x.map(y => [y.key, y.value])));
   }
 }
 </script>

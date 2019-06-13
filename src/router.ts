@@ -30,6 +30,14 @@ export default new Router({
       component: () => import(/* webpackChunkName: "addvocab" */ "./views/AddVocab.vue")
     },
     {
+      path: "/editcollection",
+      name: "editcollection",
+      // route level code-splitting
+      // this generates a separate chunk (about.[hash].js) for this route
+      // which is lazy-loaded when the route is visited.
+      component: () => import(/* webpackChunkName: "editcollection" */ "./views/EditCollection.vue")
+    },
+    {
       path: "/practicevocab",
       name: "practicevocab",
       // route level code-splitting
