@@ -1,6 +1,17 @@
 <template>
   <div class="container mx-auto" style="height:70vh;">
-    <div class="ordering">
+    <div class="options">
+      <b-form-select
+        v-if="collectionNames && collectionNames.length > 0"
+        v-model="selectedCollection"
+        :options="collectionNames"
+        class="m-0"
+        @input="collectionSelected"
+      >
+        <template slot="first">
+          <option :value="null" disabled>-- Select a Collection --</option>
+        </template>
+      </b-form-select>
       <b-form-select v-model="selected" :options="options" class="mb-3" @input="selectionMade">
         <template slot="first">
           <option :value="null" disabled>-- Please select an option --</option>
@@ -50,8 +61,9 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import SpanishText from "@/components/SpanishText.vue"; // @ is an alias to /src
-import user, { FlashCard, EntryValue } from "@/User";
-
+// import user from "@/ts/User";
+import FlashCard from "@/ts/FlashCard";
+import global from "@/ts/Global";
 @Component({
   components: {
     SpanishText
@@ -63,6 +75,8 @@ export default class PracticeVocab extends Vue {
   public history: FlashCard[] = [];
   public currentCard: FlashCard | null = null;
   public selected: any = null;
+  public selectedCollection: string | null = null;
+  private myGlobal = global;
 
   public options = [
     {
@@ -82,13 +96,18 @@ export default class PracticeVocab extends Vue {
     { text: "F", value: "F", disabled: false }
   ];
 
+  get collectionNames(): string[] | null {
+    return this.myGlobal.collectionNames;
+  }
   public front: boolean = true;
   public saveStatusText: string = "Save Status Online";
-  begin() {
+  async begin() {
     (window as any).me = this;
     console.log("starting");
-    if (this.myCards.length < 1) {
-      this.myCards = [...user.flashCards];
+    if (this.myCards.length < 1 && this.selectedCollection) {
+      const collName = this.selectedCollection;
+      const cards = await global.getFlashCards(collName);
+      this.myCards = [...cards]; //create a copy list of links so I can eff with them.
       //also do selected sort.
       this.selected.func();
     }
@@ -98,6 +117,10 @@ export default class PracticeVocab extends Vue {
     }
     this.currentCard = this.getNext();
     console.log("current card:", this.currentCard);
+  }
+  async collectionSelected(x: string) {
+    const collection = await this.myGlobal.getCollection(x);
+    this.myCards = FlashCard.toFlashCards(collection);
   }
   selectionMade(x: any) {
     console.log("selection made");
@@ -114,11 +137,12 @@ export default class PracticeVocab extends Vue {
       (a: FlashCard, b: FlashCard) => b.successRate - a.successRate
     );
   }
-  got() {
+  async got() {
     //user got correct
     const c = this.currentCard;
-    if (c) {
-      c.addSuccess();
+    if (c && this.selectedCollection) {
+      const coll = await global.getCollection(this.selectedCollection);
+      c.addSuccess(coll);
     }
     this.nextTick();
   }
@@ -149,20 +173,21 @@ export default class PracticeVocab extends Vue {
       this.front = true;
     }
   }
-  missed() {
+  async missed() {
     //user missed, idiot
     const c = this.currentCard;
-    if (c) {
-      c.addFailure();
+    if (c && this.selectedCollection) {
+      const coll = await global.getCollection(this.selectedCollection);
+      c.addFailure(coll);
     }
     this.nextTick();
   }
   mounted() {
-    this.myCards = [...user.flashCards];
+    // this.myCards = [...user.flashCards];
     // this.myCards.sort(
     //   (a: FlashCard, b: FlashCard) => a.importance - b.importance
     // );
-    this.randomize();
+    // this.randomize();
   }
   getNext(attempts: number = 0): FlashCard | null {
     console.log("myCards", this.myCards);
@@ -189,8 +214,9 @@ export default class PracticeVocab extends Vue {
             appearedXCardsAgo++;
           } else {
             //finally, we have arrived at 5 cards away.
-            this.myCards.splice(i, 0, isInLast5);
+            this.myCards.splice(i, 0, proposedNextCard);
             succeeded = true;
+            break;
           }
         }
         if (!succeeded) {
@@ -221,10 +247,14 @@ export default class PracticeVocab extends Vue {
     return next;
   }
   saveProgress() {
+    if (!this.selectedCollection) {
+      console.log("cannot save progess without a collection selected");
+      return;
+    }
     this.saveStatusText = "saving...";
-    user
-      .setData()
-      .then(v => {
+    this.myGlobal
+      .saveCollection(this.selectedCollection)
+      .then((v: any) => {
         this.$bvToast.toast(`Successfully Saved Status to cloud`, {
           title: "Success",
           variant: "success",
@@ -232,7 +262,7 @@ export default class PracticeVocab extends Vue {
         });
         this.saveStatusText = "Save Status to Cloud";
       })
-      .catch(e => {
+      .catch((e: any) => {
         this.$bvToast.toast(e, {
           title: "Failure",
           variant: "danger",
@@ -244,6 +274,9 @@ export default class PracticeVocab extends Vue {
 </script>
 
 <style scoped lang="scss">
+.options {
+  display: flex;
+}
 .flex-row {
   display: flex;
   align-content: center;

@@ -7,6 +7,7 @@
       v-model="txt"
       :placeholder="placeholder"
       @keypress.enter="enterPressed"
+      :disabled="disabled"
       :state="state"
       ref="myField"
     ></b-form-input>
@@ -22,6 +23,7 @@ export default class SpanishText extends Vue {
   @Prop() private placeholder!: string;
   @Prop() private state!: boolean;
   @Prop() private value!: string;
+  @Prop() private disabled!: boolean;
   @Prop() private errorMessage!: string;
   public txt: string = "";
   @Watch("value")

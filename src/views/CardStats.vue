@@ -1,6 +1,16 @@
 <template>
   <div class="container mx-auto">
-    Sort By
+    <b-form-select
+      v-if="collectionNames && collectionNames.length > 0"
+      v-model="collectionSelection"
+      :options="collectionNames"
+      class="mb-3"
+      @input="collectionSelected"
+    >
+      <template slot="first">
+        <option :value="null" disabled>-- Select a Collection --</option>
+      </template>
+    </b-form-select>Sort By
     <b-dropdown prepend="Sort By" :text="selection" variant="info">
       <b-dropdown-item @click="sortByHardest">hardest</b-dropdown-item>
 
@@ -33,8 +43,9 @@
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
 import SpanishText from "@/components/SpanishText.vue"; // @ is an alias to /src
-import user, { FlashCard, EntryValue, EnteriesMap } from "@/User";
-
+import global from "@/ts/Global";
+import { EntryValue, EntriesMap } from "@/ts/Types";
+import FlashCard from "@/ts/FlashCard";
 const SORTOPTIONS = ["Hardest"];
 @Component({
   components: {
@@ -44,12 +55,21 @@ const SORTOPTIONS = ["Hardest"];
 export default class CardStats extends Vue {
   // public raw: EnteriesMap | null = user.data;
   public selection: string = "Sort By";
+  public collectionSelection: string | null = null;
+  public myGlobal = global;
   public myCards: FlashCard[] = [];
+  get collectionNames(): string[] | null {
+    return this.myGlobal.collectionNames;
+  }
   mounted() {
     (window as any).stats = this;
   }
+  async collectionSelected() {
+    if (!this.collectionSelection) return;
+    this.myCards = await this.myGlobal.getFlashCards(this.collectionSelection);
+  }
   sortByHardest(): FlashCard[] {
-    if (this.myCards.length < 1) this.myCards = [...user.flashCards];
+    // if (this.myCards.length < 1) this.myCards = [...user.flashCards];
     console.log("# flashcard:", this.myCards.length);
 
     this.selection = "hardest";

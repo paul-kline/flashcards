@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-navbar toggleable="sm" type="dark" variant="dark">
-      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.2</b-navbar-brand>
+      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.5</b-navbar-brand>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
@@ -58,7 +58,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from "vue-property-decorator";
-import User from "@/User";
+import User from "@/ts/User";
 
 @Component
 export default class Menu extends Vue {
