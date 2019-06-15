@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-navbar toggleable="sm" type="dark" variant="dark">
-      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.5</b-navbar-brand>
+      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.7.6</b-navbar-brand>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
@@ -17,10 +17,7 @@
           </b-nav-item>
 
           <b-nav-item to="stats" :active="active==2" @click="active=2">Stats</b-nav-item>
-          <b-nav-item to="editcollection" :active="active==3" @click="active=3">
-            Edit Collection
-            <!-- <router-link to="addvocab">Add Vocab</router-link> -->
-          </b-nav-item>
+          <b-nav-item to="editcollection" :active="active==3" @click="active=3">Edit Collection</b-nav-item>
           <!-- <b-nav-item href="#" disabled>Disabled</b-nav-item> -->
         </b-nav>
 

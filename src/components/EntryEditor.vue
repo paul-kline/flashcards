@@ -2,13 +2,7 @@
   <div class="flex-row rounded-lg border-bottom p-1">
     <SpanishText :placeholder="toAdd.originalKey" v-model="toAdd.key"/>
     <SpanishText :placeholder="toAdd.originalValue" v-model="toAdd.value"/>
-    <b-form-checkbox
-      class="m-1"
-      id="checkbox-1"
-      v-model="toAdd.reverse"
-      name="checkbox-1"
-      :value="true"
-    >Include reverse</b-form-checkbox>
+    <b-form-checkbox class="m-1" v-model="toAdd.reverse">Include reverse</b-form-checkbox>
     <b-button @click="deleteMe">X</b-button>
   </div>
 </template>

@@ -91,11 +91,11 @@ export default class PracticeVocab extends Vue {
       value: { text: "hard-on", func: this.byHardest },
       disabled: false
     },
-    { text: "B", value: "Boo", disabled: false },
-    { text: "C", value: "C", disabled: false },
-    { text: "D", value: { d: 1 }, disabled: true },
-    { text: "E", value: "E", disabled: false },
-    { text: "F", value: "F", disabled: false }
+    {
+      text: "Recommended",
+      value: { text: "recommended", func: this.byRecommendation },
+      disabled: false
+    }
   ];
 
   get collectionNames(): string[] | null {
@@ -136,6 +136,14 @@ export default class PracticeVocab extends Vue {
     this.myCards = this.allCards.slice(0, this.maxCards);
 
     console.log("random order", this.myCards.map(x => (x as any)._key));
+  }
+  byRecommendation() {
+    this.allCards.sort(
+      (a: FlashCard, b: FlashCard) => a.recommended - b.recommended
+    );
+    console.table(this.allCards.map(x => [x.key, x.value, x.recommended]));
+    const start = Math.max(this.allCards.length - this.maxCards, 0);
+    this.myCards = this.allCards.slice(start);
   }
   byHardest() {
     console.log("sorting by hardest");
