@@ -25,7 +25,7 @@
       </form>
     </b-modal>
     <b-form-select
-      v-if="collectionNames && collectionNames.length > 0"
+      v-if="isSignedIn"
       v-model="selectedCollection"
       :options="collectionNames"
       class="mb-3"
@@ -37,6 +37,7 @@
       <!-- <option value="newCollection">-- New Collection --</option> -->
       <option value="newCollection">-- New Collection --</option>
     </b-form-select>
+    <div v-else>Please log in before adding a collection</div>
     <div class="flex-row">
       <div class="key m-1">
         <SpanishText
@@ -87,7 +88,7 @@
           <b-button @click="deleteMe(add)">X</b-button>
         </div>-->
         <template>
-          <EntryEditor :to-add="add"></EntryEditor>
+          <EntryEditor @deleted="deleteMe" :to-add="add"></EntryEditor>
           <div class="divider"></div>
         </template>
       </div>
@@ -124,6 +125,9 @@ export default class AddVocab extends Vue {
   public newCollectionName: string = "";
   public collectionNameState: boolean = true;
   public currentEntries: EntriesMap | null = null;
+  get isSignedIn() {
+    return this.myGlobal.isSignedIn;
+  }
   resetModal() {
     console.log("in reset modal");
     this.newCollectionName = "";
@@ -186,7 +190,22 @@ export default class AddVocab extends Vue {
     // console.log("on q mark!!!");
     this.includeReverse = false;
   }
+  // async deleteMe(x: ToAdd) {
+  //   if (!this.selectedCollection) {
+  //     console.error("could not delete", x, "because no selection");
+  //     return;
+  //   }
+  //   const i = this.toAdds.indexOf(x);
+  //   if (i >= 0) {
+  //     const [x] = this.toAdds.splice(i, 1);
+  //     this.toDelete.push(x);
+  //   }
+  //   const collection = await global.getCollection(this.selectedCollection);
+  //   // this.toDelete.push(collection[x.originalKey]);
+  //   delete collection[x.originalKey];
+  // }
   async deleteMe(x: ToAdd) {
+    console.log("deleting");
     if (!this.selectedCollection) {
       console.log("could not delete", x, "because no selection");
       return;

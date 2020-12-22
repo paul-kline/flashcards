@@ -21,6 +21,7 @@ export default class FlashCard {
     return flashCards;
   }
   public _recommended: number | null = null;
+  public _created: number | null = null;
 
   constructor(public _key: string, private entryValue: EntryValue, public forwards: boolean = true) {
     // this.setDefaultImportance();
@@ -70,6 +71,13 @@ export default class FlashCard {
     //the more recently
     this._recommended = 1 / successRate + lastSeenDays * 0.4 + (Math.random() < 0.5 ? -1 : 1) * Math.random();
     return this._recommended;
+  }
+  get createdTime(): number {
+    if (this._created == null) {
+      const d = this.entryValue.created;
+      this._created = (d && d.getTime()) || 0;
+    }
+    return this._created;
   }
   get recommended(): number {
     if (this._recommended == null) {

@@ -16,6 +16,9 @@ export class Global {
   private _flashCardsCollection: FlashCardsMap = {};
   private user: User = User.getInstance();
 
+  get isSignedIn() {
+    return this.user.isSignedIn();
+  }
   constructor() {
     console.log("global created");
     const me = this;

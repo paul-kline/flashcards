@@ -7,6 +7,7 @@ Vue.use(Router);
 export default new Router({
   mode: "history",
   base: process.env.BASE_URL,
+  // base: "/",
   routes: [
     {
       path: "/",
@@ -30,15 +31,15 @@ export default new Router({
       component: () => import(/* webpackChunkName: "addvocab" */ "./views/AddVocab.vue")
     },
     {
-      path: "/editcollection",
-      name: "editcollection",
+      path: "managecollection",
+      name: "managecollection",
       // route level code-splitting
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import(/* webpackChunkName: "editcollection" */ "./views/EditCollection.vue")
+      component: () => import(/* webpackChunkName: "managecollection" */ "./views/Collection.vue")
     },
     {
-      path: "/practicevocab",
+      path: "/practicevocab/:collection?/:method?",
       name: "practicevocab",
       // route level code-splitting
       // this generates a separate chunk (about.[hash].js) for this route

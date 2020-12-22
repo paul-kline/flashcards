@@ -1,7 +1,7 @@
 <template>
   <div class="flex-row rounded-lg border-bottom p-1">
-    <SpanishText :placeholder="toAdd.originalKey" v-model="toAdd.key"/>
-    <SpanishText :placeholder="toAdd.originalValue" v-model="toAdd.value"/>
+    <SpanishText :placeholder="toAdd.originalKey" v-model="toAdd.key" @changed="onChange"/>
+    <SpanishText :placeholder="toAdd.originalValue" v-model="toAdd.value" @changed="onChange"/>
     <b-form-checkbox class="m-1" v-model="toAdd.reverse">Include reverse</b-form-checkbox>
     <b-button @click="deleteMe">X</b-button>
   </div>
@@ -20,11 +20,28 @@ export default class EntryEditor extends Vue {
   @Prop() private toAdd!: ToAdd;
   @Prop() public prop2!: string;
 
-  @Watch("toAdd")
-  onPropertyChanged(value: string, oldValue: string) {
-    console.log("toadd changed from:", oldValue, "to", value);
+  onChange() {
+    this.$emit("changed");
   }
+  get key() {
+    return this.toAdd.key;
+  }
+  get value() {
+    return this.toAdd.value;
+  }
+  @Watch("key")
+  keyChange(value: string, oldValue: string) {
+    this.$emit("keychange", value);
+    this.$emit("changed");
+    // console.log("toadd changed from:", oldValue, "to", value);
+  }
+  @Watch("value")
+  valChange(value: string, oldValue: string) {
+    this.$emit("valuechange", value);
+    this.$emit("changed");
 
+    // console.log("toadd changed from:", oldValue, "to", value);
+  }
   mounted() {
     // console.log("mounted with:", this.toAdd);
     // console.log("prop2", this.prop2);

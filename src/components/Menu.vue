@@ -1,23 +1,27 @@
 <template>
   <div>
     <b-navbar toggleable="sm" type="dark" variant="dark">
-      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.7.6</b-navbar-brand>
+      <b-navbar-brand to="/" :active="active == -1" @click="active=-1">Vocab 0.0.7.13</b-navbar-brand>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
       <b-collapse id="nav-collapse" is-nav>
         <b-nav tabs>
-          <b-nav-item to="practicevocab" :active="active==0" @click="active=0">
+          <b-nav-item :to="{'name' : 'practicevocab'}" :active="active==0" @click="active=0">
             Practice Vocab
             <!-- <router-link class to="practicevocab">Practice Vocab</router-link> -->
           </b-nav-item>
-          <b-nav-item to="addvocab" :active="active==1" @click="active=1">
+          <b-nav-item to="addvocab" extact :active="active==1" @click="active=1">
             Add Vocab
             <!-- <router-link to="addvocab">Add Vocab</router-link> -->
           </b-nav-item>
 
           <b-nav-item to="stats" :active="active==2" @click="active=2">Stats</b-nav-item>
-          <b-nav-item to="editcollection" :active="active==3" @click="active=3">Edit Collection</b-nav-item>
+          <b-nav-item
+            :to="{'name' : 'managecollection'}"
+            :active="active==3"
+            @click="active=3"
+          >Manage Collection</b-nav-item>
           <!-- <b-nav-item href="#" disabled>Disabled</b-nav-item> -->
         </b-nav>
 

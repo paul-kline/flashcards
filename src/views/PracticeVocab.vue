@@ -12,7 +12,7 @@
           <option :value="null" disabled>-- Select a Collection --</option>
         </template>
       </b-form-select>
-      <b-form-select v-model="selected" :options="options" class="mb-3" @input="selectionMade">
+      <b-form-select v-model="selected" :options="options" class="mb-3" @input="applySort">
         <template slot="first">
           <option :value="null" disabled>-- Please select an option --</option>
         </template>
@@ -59,11 +59,12 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from "vue-property-decorator";
+import { Component, Vue, Watch, Prop } from "vue-property-decorator";
 import SpanishText from "@/components/SpanishText.vue"; // @ is an alias to /src
 // import user from "@/ts/User";
 import FlashCard from "@/ts/FlashCard";
 import global from "@/ts/Global";
+import { FlashCardsMap } from "../ts/Types";
 @Component({
   components: {
     SpanishText
@@ -83,23 +84,48 @@ export default class PracticeVocab extends Vue {
   public options = [
     {
       text: "Random",
-      value: { text: "rando", func: this.randomize },
+      value: { text: "rando", sortF: byRandom },
       disabled: false
     },
     {
       text: "Hardest",
-      value: { text: "hard-on", func: this.byHardest },
+      value: { text: "hard-on", sortF: bySuccessRate },
       disabled: false
     },
     {
       text: "Recommended",
-      value: { text: "recommended", func: this.byRecommendation },
+      value: { text: "recommended", sortF: byRecommendation },
+      disabled: false
+    },
+    {
+      text: "Newest",
+      value: { text: "Newest", sortF: byNewest },
       disabled: false
     }
   ];
 
+  get routeCollection(): string {
+    return this.$route.params.collection;
+  }
+  get routeMethod(): string {
+    return this.$route.params.method;
+  }
+  set routeCollection(v: string) {
+    this.$router.push("/practicevocab/" + v);
+    // this.$route.params.collection = v;
+  }
   get collectionNames(): string[] | null {
     return this.myGlobal.collectionNames;
+  }
+  @Watch("routeCollection")
+  onPropertyChanged(value: any, oldValue: any) {
+    console.log(
+      "collection names changed",
+      "form",
+      oldValue,
+      "new value",
+      value
+    );
   }
   public front: boolean = true;
   public saveStatusText: string = "Save Status Online";
@@ -111,7 +137,8 @@ export default class PracticeVocab extends Vue {
       const cards = await global.getFlashCards(collName);
       this.allCards = [...cards]; //create a copy list of links so I can eff with them.
       //also do selected sort.
-      this.selected.func();
+      this.applySort(this.selected);
+      // this.selected.func();
     }
     const hl = this.history.length;
     if (hl > 100) {
@@ -120,38 +147,45 @@ export default class PracticeVocab extends Vue {
     this.currentCard = this.getNext();
     console.log("current card:", this.currentCard);
   }
-  async collectionSelected(x: string) {
+  async collectionSelected(collectionName: string) {
     // const collection = await this.myGlobal.getCollection(x);
-    this.allCards = await this.myGlobal.getFlashCards(x);
+    this.routeCollection = collectionName;
+    this.allCards = await this.myGlobal.getFlashCards(collectionName);
     // this.myCards = FlashCard.toFlashCards(collection);
     // console.table(this.myCards.map(x => [x._key, x.key, x.value, x.forwards]));
   }
-  selectionMade(x: any) {
-    console.log("selection made");
-    x.func();
+  applySort(selection: any) {
+    this.myCards = this.allCards.sort(selection.sortF);
+    console.log("sort applied:");
+    tableCards(this.allCards);
+    // console.table(this.allCards);
+    this.postSortHook();
   }
-  randomize() {
-    console.log("randiming");
-    this.allCards.sort((a: FlashCard, b: FlashCard) => Math.random() - 0.5);
-    this.myCards = this.allCards.slice(0, this.maxCards);
-
-    console.log("random order", this.myCards.map(x => (x as any)._key));
-  }
-  byRecommendation() {
-    this.allCards.sort(
-      (a: FlashCard, b: FlashCard) => a.recommended - b.recommended
-    );
-    console.table(this.allCards.map(x => [x.key, x.value, x.recommended]));
+  /**
+   * limit size, randomize order.
+   */
+  postSortHook() {
     const start = Math.max(this.allCards.length - this.maxCards, 0);
     this.myCards = this.allCards.slice(start);
+
+    this.myCards.sort(byRandom);
   }
-  byHardest() {
-    console.log("sorting by hardest");
-    this.allCards.sort(
-      (a: FlashCard, b: FlashCard) => b.successRate - a.successRate
-    );
-    this.myCards = this.allCards.slice(0, this.maxCards);
-  }
+
+  // byRecommendation() {
+  //   this.allCards.sort(
+  //     (a: FlashCard, b: FlashCard) => a.recommended - b.recommended
+  //   );
+  //   console.table(this.allCards.map(x => [x.key, x.value, x.recommended]));
+  //   const start = Math.max(this.allCards.length - this.maxCards, 0);
+  //   this.myCards = this.allCards.slice(start);
+  // }
+  // byHardest() {
+  //   console.log("sorting by hardest");
+  //   this.allCards.sort(
+  //     (a: FlashCard, b: FlashCard) => b.successRate - a.successRate
+  //   );
+  //   this.myCards = this.allCards.slice(0, this.maxCards);
+  // }
   async got() {
     //user got correct
     const c = this.currentCard;
@@ -198,11 +232,25 @@ export default class PracticeVocab extends Vue {
     this.nextTick();
   }
   mounted() {
-    // this.myCards = [...user.flashCards];
-    // this.myCards.sort(
-    //   (a: FlashCard, b: FlashCard) => a.importance - b.importance
-    // );
-    // this.randomize();
+    console.log("mounted");
+    console.log("routeParam", this.routeCollection);
+    if (this.routeCollection) {
+      //set collection?
+      this.selectedCollection = this.routeCollection;
+    }
+    if (this.routeMethod) {
+      console.log("this.routeMethod", this.routeMethod);
+      //set collection?
+      const me = this;
+      setTimeout(() => {
+        me.selected =
+          me.options.find(
+            x => x.text.toLowerCase() == me.routeMethod.toLowerCase()
+          ) || null;
+        console.log("this.SELECTED:", this.selected);
+        me.$forceUpdate();
+      }, 1000);
+    }
   }
   getNext(attempts: number = 0): FlashCard | null {
     console.log("myCards", this.myCards);
@@ -250,18 +298,7 @@ export default class PracticeVocab extends Vue {
       return null;
     }
   }
-  getNextRandomized(): FlashCard {
-    const l = this.myCards.length;
-    let next: FlashCard;
-    // if (l < 1) {
-    //   this.flashCards = user.toFlashCards();
-    // }
-    // if (l > 0) {
-    const i = Math.floor(Math.random() * l);
-    next = this.myCards[i];
-    this.myCards.splice(i, 1);
-    return next;
-  }
+
   saveProgress() {
     if (!this.selectedCollection) {
       console.log("cannot save progess without a collection selected");
@@ -271,7 +308,7 @@ export default class PracticeVocab extends Vue {
     this.myGlobal
       .saveCollection(this.selectedCollection)
       .then((v: any) => {
-        this.$bvToast.toast(`Successfully Saved Status to cloud`, {
+        this.$bvToast.toast(`Successfully Saved Status to cloud: ${v}`, {
           title: "Success",
           variant: "success",
           autoHideDelay: 4000
@@ -284,8 +321,38 @@ export default class PracticeVocab extends Vue {
           variant: "danger",
           autoHideDelay: 4000
         });
+        this.saveStatusText = "Save Status to Cloud (unsaved)";
       });
   }
+}
+
+//sorters: should make highest priority cards LAST.
+function byRandom(a: any, b: any) {
+  return Math.random() - 0.5;
+}
+function byNewest(a: FlashCard, b: FlashCard) {
+  return a.createdTime - b.createdTime;
+}
+//want lowest success rate last.
+function bySuccessRate(a: FlashCard, b: FlashCard) {
+  return b.successRate - a.successRate;
+}
+//want highest value last.
+function byRecommendation(a: FlashCard, b: FlashCard) {
+  return a.recommended - b.recommended;
+}
+
+function tableCards(ls: FlashCard[]) {
+  console.table(
+    ls.map(x => {
+      return {
+        key: x.key,
+        value: x.value,
+        success: x.successRate,
+        rec: x.recommended
+      };
+    })
+  );
 }
 </script>
 

@@ -8,6 +8,7 @@ import "firebase/auth";
 import "firebase/firestore";
 import { EntryValue, EntriesMap, Stats, emptyStats } from "./Types";
 import FlashCard from "./FlashCard";
+import ExtraPromise from "./ExtraPromise";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD7y2-C386xX3FDq9San2_9rkK04es_rm0",
@@ -74,6 +75,7 @@ export class User {
       .getRedirectResult()
       .then(function(result) {
         if (result.credential) {
+          console.log("successfully got auth redirect results:", result);
           // This gives you a Google Access Token. You can use it to access the Google API.
           var token = (result.credential as any).accessToken;
           me.authToken = token;
@@ -232,16 +234,21 @@ export class User {
       return Promise.reject("User is not logged in. Could not delete anything from collection: " + collectionName);
     }
   }
-  saveCollection(collectionName: string, data: any) {
+  async saveCollection(collectionName: string, data: any, timeout: number = 5000): Promise<string> {
     if (this.user) {
-      var docRef = db
+      const docRef = db
         .collection("users")
         .doc(this.user.uid)
         .collection("collections")
         .doc(collectionName);
       //   console.log(docRef);
       // (window as any).doc = docRef;
-      return docRef.set(data as firebase.firestore.DocumentData, { merge: true });
+      const ep = new ExtraPromise(docRef.set(data as firebase.firestore.DocumentData, { merge: true }));
+      const r = ep.timeout(timeout, "Timeout Occurred");
+      // const p = new Promise((resolve,reject)=>{
+
+      // })
+      return r.then(() => "Successfully saved."); //.catch(() => "Appear Offline. Try again later.");
     } else {
       return Promise.reject("No User logged in");
     }
